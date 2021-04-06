@@ -1,0 +1,118 @@
+*******ON MASTER*********   (https://www.jenkins.io/doc/book/installing/#debianubuntu)
+
+sudo apt-get update
+sudo apt-get install openjdk-8-jdk
+wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
+
+sudo sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > \
+    /etc/apt/sources.list.d/jenkins.list'
+    
+sudo apt-get update
+sudo apt-get install jenkins
+
+*Once installed go to  ec2 console copy the ip address and open it on browser with :8080*
+copy the commands from there and paste it on master terminal
+
+**$ sudo cat <paste>
+/*password will be generated-> copy it nad paste it on browser and proceed providing details
+  and install the plugins once done go to go*/
+
+Now on jenkin master go to ->manage jenkins-> configure global security -> agent-> and make it random
+
+
+FOR CONNECTING TO NODES
+***on master terminal***
+
+cd .ssh
+ls
+ssh-keygen
+ls
+cat id_rsa.pub
+/* copy the key and first sav eto masters authorized keys*/
+sudo nano authorized_keys    **paste there**
+
+
+******ON SLAVE*******  luanch
+sudo apt-get update
+sudo apt-get install openjdk-8-jdk
+sudo apt-get install docker.io -y
+
+******ON Slave SERVER*******
+
+cd .ssh
+ls
+sudo nano authorized_keys
+/* paste the key from master*/
+sudo su
+cd
+pwd
+/root# cd .ssh
+ls
+sudo nano authorized_keys
+/* paste the keys from master */
+
+
+
+
+******ON Slave SERVER*******
+
+exit root user
+/,ssh$ cd
+ls
+#jenkins
+cd jenkins
+mkdir test
+cd
+sudo git clone "  "
+ls
+cd website/
+ls
+sudo mv ./image/ /home/ubuntu/jenkins/test/
+sudo mv ./index.html /home/ubuntu/jenkins/test/
+cd 
+cd jenkins/test
+ls
+sudo git add .
+sudo git commit -m " "
+git branch develop
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+git repo:
+https://github.com/hshar/website.git
+
+------------------------------------------------------------------
+session commands:
+
+Master:
+ 1  sudo apt-get update
+    2  sudo apt-get install openjdk-8-jdk -y
+    3  sudo apt-get install docker.io -y
+    4  wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
+    5  sudo sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > \
+    /etc/apt/sources.list.d/jenkins.list'
+    6  sudo apt-get update
+    7  sudo apt-get install jenkins
+    8  sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+    9  cd .ssh
+   10  ssh-keygen
+   11  ls
+   12  cat id_rsa.pub
+   13  sudo nano authorized_keys
+   14  sudo nano id_rsa
+   15  sudo cat id_rsa
+   16  history
+
+
+Slave:
+
+  1  cd jenkins
+    2  cd test
+    3  ls
+    4  git branch
+    5  sudo git push origin develop
+    6  cd ..
+    7  ls
+    8  cd workspace
+    9  ls
+   10  history
