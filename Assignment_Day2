@@ -1,0 +1,419 @@
+3 Server group :
+Jekins Master
+Jenkins Slave-Testing
+Jenkins Slave-Production
+
+
+*******ON MASTER*********   (https://www.jenkins.io/doc/book/installing/#debianubuntu)
+
+sudo apt-get update
+sudo apt-get install openjdk-8-jdk
+wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
+
+sudo sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > \
+    /etc/apt/sources.list.d/jenkins.list'
+    
+sudo apt-get update
+sudo apt-get install jenkins
+
+*Once installed go to  ec2 console copy the ip address and open it on browser with :8080*
+copy the commands from there and paste it on master terminal
+
+**$ sudo cat <paste>
+/*password will be generated-> copy it nad paste it on browser and proceed providing details
+  and install the plugins once done go to go*/
+
+Now on jenkin master go to ->manage jenkins-> configure global security -> agent-> and make it random
+
+
+FOR CONNECTING TO NODES
+***on master terminal***
+
+cd .ssh
+ls
+ssh-keygen
+ls
+cat id_rsa.pub
+/* copy the key and first sav eto masters authorized keys*/
+sudo nano authorized_keys    **paste there**
+
+
+******ON TESTING SERVER*******  luanch
+sudo apt-get update
+sudo apt-get install openjdk-8-jdk
+
+
+********0N PRODUCTION*********** luanch
+sudo apt-get update
+sudo apt-get install openjdk-8-jdk
+
+******ON TESTING SERVER*******
+
+cd .ssh
+ls
+sudo nano authorized_keys
+/* paste the key from master*/
+sudo su
+cd
+pwd
+/root# cd .ssh
+ls
+sudo nano authorized_keys
+/* paste the keys from master */
+
+
+********0N PRODUCTION*********** 
+cd .ssh
+ls
+sudo nano authorized_keys
+/* paste the key from master*/
+sudo su
+cd
+pwd
+/root# cd .ssh
+ls
+sudo nano authorized_keys
+/* paste the keys from master */
+
+
+
+********Now connect through masters********
+
+******ON TESTING SERVER*******
+
+exit root user
+/,ssh$ cd
+ls
+#jenkins
+sudo git clone "  "
+ls
+cd website/
+
+
+
+--------------------------------------------------------------------------------------------------------
+
+
+***************************************************************************************************
+***PUPPET INSTALLATION*****
+ON MASTER:
+
+sudo apt-get update &&
+sudo apt-get install wget && 
+wget https://apt.puppetlabs.com/puppet-release-bionic.deb &&
+sudo dpkg -i puppet-release-bionic.deb &&                    
+sudo apt-get update &&
+apt policy puppet master &&
+sudo apt-get install puppet-master
+
+
+
+********ON MASTER******
+
+sudo nano /etc/default/puppet-master
+JAVA_ARGS="-Xms512m Xmx512m"
+sudo systemctl restart puppet-master
+sudo ufw allow 8140/tcp &&
+sudo nano /etc/hosts
+# ip address of master both on master and slaves
+sudo systemctl restart puppet-master
+
+ON SLAVE:
+
+sudo apt-get update &&
+sudo apt-get install wget && 
+wget https://apt.puppetlabs.com/puppet-release-bionic.deb && 
+sudo dpkg -i puppet-release-bionic.deb &&
+sudo apt-get update &&
+apt policy puppet master &&
+sudo apt-get install puppet
+
+
+****ON SLAVE**** 
+
+sudo nano /etc/hosts
+#add ip addtress of master
+sudo systemctl start puppet
+sudo systemctl enable puppet
+
+/* BOTH THE SLAVE: TESTING AS WELL AS PRODUCTION */
+
+*****ON MASTER******
+
+sudo puppet cert list 
+sudo puppet cert sign --all
+
+sudo mkdir -p /etc/puppet/code/environments/production/manifests
+cd
+sudo nano site.pp
+
+
+node default {
+exec{'Conditions':
+command=> '/bin/echo "Apache is not  installed" > /tmp/status.txt',
+unless=> '/bin/which apache2',
+}
+exec{'conditions':
+command=> '/bin/echo "Apache is installed" > /tmp/status.txt',
+onlyif=> '/bin/which apache2',
+}
+}
+
+
+------------------------------------------------------------------------------------------------------------------
+************NAGIOS************
+
+****ON MASTER*****
+
+sudo apt-get update &&
+sudo apt-get install wget build-essential unzip openssl libssl-dev &&
+sudo apt-get install apache2 php libapache2-mod-php php-gd libgd-dev &&
+sudo adduser nagios 
+
+sudo groupadd nagcmd && 
+sudo usermod -a -G nagcmd nagios && 
+sudo usermod -a -G nagcmd www-data &&
+cd /tmp &&
+wget -O nagioscore.tar.gz https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.4.5.tar.gz 
+
+ls
+
+tar xzf nagioscore.tar.gz &&
+cd /tmp/nagioscore-nagios-4.4.5/ &&
+sudo ./configure --with-httpd-conf=/etc/apache2/sites-enabled &&
+sudo make all &&
+sudo make install &&
+sudo  make install-init &&
+sudo make install-commandmode &&
+sudo make install-config &&
+sudo make install-webconf &&
+sudo a2enmod rewrite &&
+sudo a2enmod cgi &&
+sudo ufw allow Apache &&
+sudo ufw reload
+
+sudo htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin
+sudo service apache2 restart
+sudo systemctl start nagios.service
+
+**started nagios**
+******NRPE PLUGINS***********
+wget http://www.nagios-plugins.org/download/nagios-plugins-2.2.1.tar.gz &&
+tar xzf nagios-plugins-2.2.1.tar.gz &&
+cd nagios-plugins-2.2.1 &&
+sudo ./configure --with-nagios-user=nagios --with-openssl &&
+sudo make &&
+sudo make install &&
+cd
+sudo nano /usr/local/nagios/etc/nagios.cfg &&
+sudo mkdir sudo nano /usr/local/nagios/etc/servers &&
+sudo /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg &&
+sudo service nagios start &&
+sudo systemctl enable nagios
+
+
+ON SLAVE'
+sudo apt-get update &&
+sudo apt-get install nagios-nrpe-server nagios-plugins
+sudo nano /etc/nagios/nrpe.cfg
+sudo /etc/init.d/nagios-nrpe-server restart
+
+
+
+AGAIN ON MASTER
+***for adding hosts*********
+cd /usr/local/nagios/etc/objects
+ls
+sudo nano localhost.cfg
+sudo nano host1.cfg
+cd ..
+ls
+sudo nano nagios.cfg
+cd objects/
+sudo systemctl restart nagios
+
+**********ON MASTER***********
+cd
+cd /usr/local/nagios/etc/objects
+ls
+sudo nano production.cfg
+sudo nano localhost.cfg
+/*copy the host configurations */
+sudo nano production.cfg
+
+  define host {
+
+    use                     linux-server
+    host_name               production
+    alias                   nagios-host
+    address                 3.22.221.203
+}
+cd ..
+ls
+sudo nano nagios.cfg
+/* add under definition for monintoring local hosts*/
+cfg_file=/usr/local/nagios/etc/objects/production.cfg     /*paste this line*/
+
+sudo systemctl restart nagios
+
+
+
+Adding service
+cd /usr/local/nagios/etc/objects
+ls
+sudo nano templates.cfg
+sudo nano host1.cfg
+sudo systemctl restart nagios
+
+  define service {
+
+    name                            Http-service
+    use                             generic-service
+    host_name                       production
+    service_description             HTTP
+    check_command                   check_http
+    check_interval                  1
+                    
+}
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Session Commands:
+
+On Master:
+ 1  sudo apt-get update
+    2  sudo apt-get install openjdk-8-jdk -y
+    3  sudo apt-get install docker.io -y
+    4  wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
+    5  sudo sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > \
+    /etc/apt/sources.list.d/jenkins.list'
+    6  sudo apt-get update
+    7  sudo apt-get install jenkins
+    8  cat /var/lib/jenkins/secrets/initialAdminPassword
+    9  sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+   10  cd .ssh
+   11  ssh-keygen
+   12  ls
+   13  cat id_rsa.pub
+   14  sudo nano authorized_keys
+   15  sudo cat id_rsa
+   16  id_rsahistory
+   17  history
+  1  sudo apt-get update && sudo apt-get install wget &&  wget https://apt.puppetlabs.com/puppet-release-bionic.deb && sudo dpkg -i puppet-release-bionic.deb &&                     sudo apt-get update && apt policy puppet master && sudo apt-get install puppet-master
+    2  sudo nano /etc/default/puppet-master
+    3  sudo systemctl restart puppet-master
+    4  sudo ufw allow 8140/tcp && sudo nano /etc/hosts
+    5  sudo systemctl restart puppet-master
+    6  sudo puppet cert list
+    7  sudo puppet cert sign --all
+    8  sudo mkdir -p /etc/puppet/code/environments/production/manifests
+    9  cd /etc/puppet/code/environments/production/manifests
+   10  sudo nano site.pp
+   11  cd
+   12  clear
+   13  sudo apt-get update && sudo apt-get install wget build-essential unzip openssl libssl-dev && sudo apt-get install apache2 php libapache2-mod-php php-gd libgd-dev && sudo adduser nagios
+   14  sudo groupadd nagcmd &&  sudo usermod -a -G nagcmd nagios &&  sudo usermod -a -G nagcmd www-data && cd /tmp && wget -O nagioscore.tar.gz https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.4.5.tar.gz
+   15  tar xzf nagioscore.tar.gz && cd /tmp/nagioscore-nagios-4.4.5/ && sudo ./configure --with-httpd-conf=/etc/apache2/sites-enabled && sudo make all && sudo make install && sudo  make install-init && sudo make install-commandmode && sudo make install-config && sudo make install-webconf && sudo a2enmod rewrite && sudo a2enmod cgi && sudo ufw allow Apache && sudo ufw reload
+   16  sudo htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin
+   17  sudo service apache2 restart
+   18  sudo systemctl start nagios.service
+   19  cd
+   20  wget http://www.nagios-plugins.org/download/nagios-plugins-2.2.1.tar.gz && tar xzf nagios-plugins-2.2.1.tar.gz && cd nagios-plugins-2.2.1 && sudo ./configure --with-nagios-user=nagios --with-openssl && sudo make && sudo make install && cd
+   21  sudo nano /usr/local/nagios/etc/nagios.cfg && sudo mkdir sudo nano /usr/local/nagios/etc/servers && sudo /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg && sudo service nagios start && sudo systemctl enable nagios
+   22  cd /usr/local/nagios/etc/objects
+   23  ls
+   24  sudo nano localhost.cfg
+   25  sudo nano production.cfg
+   26  cd ..
+   27  ls
+   28  sudo nano nagios.cfg
+   29  cd objects
+   30  ls
+   31  sudo systemctl restart nagios
+   32  sudo nano production.cfg
+   33  sudo systemctl restart nagios
+   34  history
+-------------------------------------
+On Testing Sever:
+    1  cd .ssh
+    2  clear
+    3  ls
+    4  sudo nano authorized_keys
+    5  sudo su
+    6  cd
+    7  clear
+    8  cd jenkins
+    9  ls
+   10  mkdir test
+   11  cd
+   12  git clone "https://github.com/hshar/website.git"
+   13  ls
+   14  cd website
+   15  ls
+   16  sudo mv ./images/ /home/ubuntu/jenkins/test/
+   17  sudo mv ./index.html /home/ubuntu/jenkins/test/
+   18  ls
+   19  cd
+   20  ls
+   21  sudo rm -rf website
+   22  cd jenkins/test/
+   23  ls
+   24  sudo git init
+   25  sudo git remote add origin "https://github.com/kritika1231/project_devops.git"
+   26  sudo git add
+   27  sudo git add .
+   28  sudo git commit -m "initial commit"
+   29  git branch
+   30  sudo git branch develop
+   31  sudo git checkout develop
+   32  sudo nano Dockerfile
+   33  sudo git add .
+   34  sudo git commit -m "added"
+   35  sudo git checkout master
+   36  sudo git merge develop
+   37  ls
+   38  git branch
+   39  sudo git push origin master
+   40  sudo git push origin develop
+   41  cd
+   42  clear
+   43  sudo apt-get update && sudo apt-get install wget &&  wget https://apt.puppetlabs.com/puppet-release-bionic.deb &&  sudo dpkg -i puppet-release-bionic.deb && sudo apt-get update && apt policy puppet master && sudo apt-get install puppet
+   44  sudo nano /etc/hosts
+   45  sudo systemctl start puppet
+   46  sudo systemctl enable puppet
+   47  sudo puppet agent --test
+   48  cd /tmp
+   49  ls
+   50  cat status.txt
+   51  cd
+   52  sudo apt-get install apache2 -y
+   53  sudo puppet agent --test
+   54  cd /tmp
+   55  cat status.txt
+   56  history
+---------------------------------------------------------------------------
+On Production Server:
+
+  1  clear
+    2  cd .ssh
+    3  ls
+    4  sudo nano authorized_keys
+    5  sudo su
+    6  cd
+    7  ls
+    8  cd jenkins
+    9  ls
+   10  cd
+   11  clear
+   12  sudo apt-get update && sudo apt-get install wget &&  wget https://apt.puppetlabs.com/puppet-release-bionic.deb &&  sudo dpkg -i puppet-release-bionic.deb && sudo apt-get update && apt policy puppet master && sudo apt-get install puppet
+   13  sudo nano /etc/hosts
+   14  sudo systemctl start puppet
+   15  sudo systemctl enable puppet
+   16  cd /tmp
+   17  cat status.txt
+   18  cd
+   19  clear
+   20  sudo apt-get update && sudo apt-get install nagios-nrpe-server nagios-plugins
+   21  sudo nano /etc/nagios/
+   22  sudo nano /etc/nagios/nrpe.cfg
+   23  sudo /etc/init.d/nagios-nrpe-server restart
+   24  history
+------------------------------------------------
